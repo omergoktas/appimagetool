@@ -2,12 +2,13 @@
 
 set -euxo pipefail
 
-if [[ "${1:-}" == "" ]]; then
-    echo "Usage: $0 <version>"
+if [[ "${2:-}" == "" ]]; then
+    echo "Usage: $0 <version> <hash>"
     exit 2
 fi
 
 version="$1"
+hash="$2"
 
 build_dir="$(mktemp -d -t mksquashfs-build-XXXXXX)"
 
@@ -20,7 +21,9 @@ trap cleanup EXIT
 
 pushd "$build_dir"
 
-wget https://github.com/plougher/squashfs-tools/archive/refs/tags/"$version".tar.gz -qO - | tar xvz --strip-components=1
+wget -q https://github.com/plougher/squashfs-tools/archive/refs/tags/"$version".tar.gz
+echo "${hash}  ${version}.tar.gz" | sha256sum -c
+tar xvzf "$version".tar.gz --strip-components=1
 
 cd squashfs-tools
 

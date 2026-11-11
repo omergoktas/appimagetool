@@ -2,12 +2,13 @@
 
 set -euxo pipefail
 
-if [[ "${1:-}" == "" ]]; then
-    echo "Usage: $0 <version>"
+if [[ "${2:-}" == "" ]]; then
+    echo "Usage: $0 <version> <hash>"
     exit 2
 fi
 
 version="$1"
+hash="$2"
 
 build_dir="$(mktemp -d -t desktop-file-utils-build-XXXXXX)"
 
@@ -23,6 +24,7 @@ pushd "$build_dir"
 # apk add glib-static glib-dev autoconf automake # Moved to build-in-docker.sh
 
 wget -c "https://gitlab.freedesktop.org/xdg/desktop-file-utils/-/archive/"$version"/desktop-file-utils-"$version".tar.gz"
+echo "${hash}  desktop-file-utils-${version}.tar.gz" | sha256sum -c
 tar xf desktop-file-utils-*.tar.gz
 cd desktop-file-utils-*/
 

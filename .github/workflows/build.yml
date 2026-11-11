@@ -1,9 +1,28 @@
 name: Build
 
+# Builds appimagetool for x86_64 and aarch64 with the AppImage project's own
+# build scripts and, for a tag, publishes the files as a release.
+#
+# What this fork changes in the AppImage project's workflow and scripts, and
+# nothing else:
+# - The release is made by GitHub's own gh, not by a tool downloaded from
+#   another repository's moving release.
+# - Only the job that makes the release may write to the repository, and the
+#   checkout keeps no token in the clone the build container sees.
+# - Actions are named by commit, ci/build-in-docker.sh names its Alpine image
+#   by digest, and the scripts in ci check the SHA-256 of every file they
+#   download: the sources of squashfs-tools and desktop-file-utils, and the
+#   runtime, which comes from this account's fork of type2-runtime.
+# - It builds the two architectures this fork is used for.
+
 on:
   push:
-  pull_request:
+    tags:
+      - '*'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -13,11 +32,7 @@ jobs:
         include:
           - ARCH: x86_64
             RUNS_ON: ubuntu-24.04
-          - ARCH: i686
-            RUNS_ON: ubuntu-24.04
           - ARCH: aarch64
-            RUNS_ON: ubuntu-24.04-arm
-          - ARCH: armhf
             RUNS_ON: ubuntu-24.04-arm
 
     name: Build ${{ matrix.ARCH }}
@@ -28,16 +43,17 @@ jobs:
       ARCH: ${{ matrix.ARCH }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           submodules: 'recursive'
+          persist-credentials: false
 
       - name: Build in Docker container
         run: |
           bash -ex ci/build-in-docker.sh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           # Artifact name
           name: appimagetool-${{ matrix.ARCH }}.build
@@ -46,18 +62,28 @@ jobs:
 
   upload:
     name: Create release and upload artifacts
+    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       - name: Inspect directory after downloading artifacts
         run: ls -alFR
       - name: Create release and upload artifacts
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          wget -q https://github.com/TheAssassin/pyuploadtool/releases/download/continuous/pyuploadtool-x86_64.AppImage
-          chmod +x pyuploadtool-x86_64.AppImage
-          GITHUB_CONTINUOUS_RELEASE_TYPE=stable ./pyuploadtool-x86_64.AppImage **/appimagetool*.AppImage*
+          mkdir release
+          cp ./*/appimagetool*.AppImage* release/
+          cd release
+          sha256sum appimagetool* > SHA256SUMS
+          cat SHA256SUMS
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --notes "Built from commit $GITHUB_SHA by $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            appimagetool* SHA256SUMS

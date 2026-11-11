@@ -43,7 +43,22 @@ cp "$(which zsyncmake)" AppDir/usr/bin
 cp "$repo_root"/resources/AppRun.sh AppDir/AppRun
 chmod +x AppDir/AppRun
 
-wget https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-"$ARCH"
+# The runtime this AppImage is packed with: release 20251108-1 of this
+# account's fork of type2-runtime, checked against its SHA-256.
+case "$ARCH" in
+    x86_64)
+        runtime_hash=7afaed97f0ea1c30c68e6beb3a0528db4398fe4e6b4f1a23f2077957277fecdf
+        ;;
+    aarch64)
+        runtime_hash=10d582ecc70c2836afee511cfc79ea6e8733ca686cb2258d86b3c4fec1b84b0b
+        ;;
+    *)
+        echo "no runtime is pinned for architecture: $ARCH"
+        exit 2
+        ;;
+esac
+wget https://github.com/omergoktas/type2-runtime/releases/download/20251108-1/runtime-"$ARCH"
+echo "${runtime_hash}  runtime-${ARCH}" | sha256sum -c
 
 pushd AppDir
 ln -s usr/share/applications/appimagetool.desktop .

@@ -28,7 +28,9 @@ esac
 
 
 # libassuan-static is supported only from 3.19 onwards
-image=alpine:3.19
+# Alpine 3.19 as Docker Hub served it on 12 November 2026, named by digest so
+# that a build takes the same image every time.
+image=alpine:3.19@sha256:6baf43584bcb78f2e5847d1de515f23499913ac9f12bdf834811a3145eb11ca1
 
 repo_root="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")"/..)"
 
@@ -76,8 +78,8 @@ echo "Requires.private: libcares libnghttp2 libidn2 libssl openssl libcrypto lib
 # in a Docker container, we can safely disable this check
 git config --global --add safe.directory '*'
 
-bash -euxo pipefail /source/ci/install-static-desktop-file-validate.sh 0.28
-bash -euxo pipefail /source/ci/install-static-mksquashfs.sh 4.6.1
+bash -euxo pipefail /source/ci/install-static-desktop-file-validate.sh 0.28 379ecbc1354d0c052188bdf5dbbc4a020088ad3f9cab54487a5852d1743a4f3b
+bash -euxo pipefail /source/ci/install-static-mksquashfs.sh 4.6.1 9c4974e07c61547dae14af4ed1f358b7d04618ae194e54d6be72ee126f0d2f53
 bash -euxo pipefail /source/ci/install-static-zsyncmake.sh 0.6.2 0b9d53433387aa4f04634a6c63a5efa8203070f2298af72a705f9be3dda65af2
 
 bash -euxo pipefail /source/ci/build.sh
