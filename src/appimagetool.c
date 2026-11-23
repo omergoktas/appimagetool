@@ -626,9 +626,9 @@ main (int argc, char *argv[])
     if (showVersionOnly)
         exit(0);
 
-    /* Check for dependencies here. Better fail early if they are not present. */
-    if(! g_find_program_in_path ("file"))
-        die("file command is missing but required, please install it");
+    /* Check for dependencies here. Better fail early if they are not present.
+     * The file command is not among them: appimagetool reads the architecture
+     * from each ELF file's header itself and never runs it. */
 #ifndef AUXILIARY_FILES_DESTINATION
     if(! g_find_program_in_path ("mksquashfs"))
         die("mksquashfs command is missing but required, please install it");

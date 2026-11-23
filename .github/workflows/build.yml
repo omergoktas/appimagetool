@@ -3,8 +3,10 @@ name: Build
 # Builds appimagetool for x86_64 and aarch64 with the AppImage project's own
 # build scripts and, for a tag, publishes the files as a release.
 #
-# What this fork changes in the AppImage project's workflow and scripts, and
-# nothing else:
+# What this fork changes in the AppImage project's workflow, scripts and code,
+# and nothing else:
+# - appimagetool no longer stops when the machine has no file command, which
+#   it never runs, so it works on a bare system such as an ubuntu container.
 # - The release is made by GitHub's own gh, not by a tool downloaded from
 #   another repository's moving release.
 # - Only the job that makes the release may write to the repository, and the
